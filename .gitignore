@@ -1,0 +1,7 @@
+*
+!.gitignore
+!env.nix.example
+!flake.nix
+!gui-config.nix
+!types/
+!types/*.nix
