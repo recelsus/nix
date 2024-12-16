@@ -2,14 +2,20 @@
   description = "NixOS Configuration with Home Manager (External)";
 
   inputs = {
+    # NixpkgsとHome Manager
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     home-manager = {
       url = "github:nix-community/home-manager/release-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    config-env.url = "path:/etc/nixos/env.nix";
-    config-hardware.url = "path:/etc/nixos/hardware-configuration.nix";
+    # ローカルファイルを参照
+    config-env = {
+      url = "path:/etc/nixos/env.nix";
+    };
+    config-hardware = {
+      url = "path:/etc/nixos/hardware-configuration.nix";
+    };
   };
 
   outputs = inputs@{ nixpkgs, home-manager, config-env, config-hardware, ... }: {
@@ -17,46 +23,47 @@
       nixos = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
-          (import config-hardware.path)
+          (import inputs.config-hardware.url) # ローカルのhardware-configuration.nix
 
           home-manager.nixosModules.home-manager {
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
               users = {
-                ${(import config-env.path).user or "default"} =
-                  import ./types/${(import config-env.path).type or "default"}.nix;
+                # ローカルのenv.nixから動的にユーザー名を取得
+                ${(import inputs.config-env.url).user or "default-user"} =
+                  import ./types/${(import inputs.config-env.url).type or "default"}.nix;
               };
             };
           }
 
           {
-            # Boot Loader Config
+            # ブートローダー設定
             boot.loader.grub.enable = true;
-            boot.loader.grub.devices = [ (import config-env.path).bootDevice or "/dev/sda" ];
+            boot.loader.grub.devices = [ (import inputs.config-env.url).bootDevice or "/dev/sda" ];
 
-            # Network Config
+            # ネットワーク設定
             networking = {
-              hostName = (import config-env.path).hostname or "nixos";
-              defaultGateway = (import config-env.path).gateway or "192.168.1.1";
+              hostName = (import inputs.config-env.url).hostname or "nixos";
+              defaultGateway = (import inputs.config-env.url).gateway or "192.168.1.1";
               interfaces.eth0.ipv4.addresses = [ {
-                address = (import config-env.path).ipv4Address or "192.168.1.100";
+                address = (import inputs.config-env.url).ipv4Address or "192.168.1.100";
                 prefixLength = 24;
               } ];
-              nameservers = (import config-env.path).nameservers or [ "8.8.8.8" ];
-              firewall.enable = (import config-env.path).firewall or false;
-              firewall.allowedTCPPorts = (import config-env.path).allowedPorts or [];
+              nameservers = (import inputs.config-env.url).nameservers or [ "8.8.8.8" ];
+              firewall.enable = (import inputs.config-env.url).firewall or false;
+              firewall.allowedTCPPorts = (import inputs.config-env.url).allowedPorts or [];
             };
 
-            # User Config
-            users.users."${(import config-env.path).user or "default-user"}" = {
+            # ユーザー設定
+            users.users."${(import inputs.config-env.url).user or "default-user"}" = {
               isNormalUser = true;
-              extraGroups = (import config-env.path).groups or [];
-              initialPassword = (import config-env.path).password or "default-password";
-              openssh.authorizedKeys.keys = (import config-env.path).authorizedKeys or [];
+              extraGroups = (import inputs.config-env.url).groups or [];
+              initialPassword = (import inputs.config-env.url).password or "default-password";
+              openssh.authorizedKeys.keys = (import inputs.config-env.url).authorizedKeys or [];
             };
 
-            # sudo Config
+            # Sudo設定
             security.sudo.extraRules = [
               {
                 groups = ["wheel"];
@@ -64,14 +71,14 @@
               }
             ];
 
-            # SSH Config
+            # SSH有効化
             services.openssh.enable = true;
 
-            # Docker Config
+            # Docker有効化
             virtualisation.docker.enable = true;
 
-            # GUI Config
-            imports = if (import config-env.path).gui then [ ./gui-config.nix ] else [];
+            # GUI設定
+            imports = if (import inputs.config-env.url).gui then [ ./gui-config.nix ] else [];
           }
         ];
       };
