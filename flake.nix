@@ -23,7 +23,7 @@
               users = {
                 # ローカルのenv.nixから動的にユーザー名を取得
                 ${(import /etc/nixos/env.nix).user or "default-user"} =
-                  import ./types/"${(import /etc/nixos/env.nix).type or "default"}.nix";
+                  import ./types/${(import /etc/nixos/env.nix).type or "default"}.nix;
               };
             };
           }
