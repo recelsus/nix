@@ -14,8 +14,10 @@
       nixos = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
+          # `config.hardwareConfig` を参照
           config.hardwareConfig
 
+          # Home Manager の設定
           home-manager.nixosModules.home-manager {
             home-manager = {
               useGlobalPkgs = true;
@@ -26,6 +28,7 @@
             };
           }
 
+          # その他の設定
           {
             boot.loader.grub.enable = true;
             boot.loader.grub.devices = [ config.env.bootDevice or "/dev/sda" ];
@@ -44,6 +47,9 @@
 
             services.openssh.enable = true;
             virtualisation.docker.enable = true;
+
+            # GUI 設定
+            imports = if config.env.gui then [ ./gui-config.nix ] else [];
           }
         ];
       };
