@@ -25,7 +25,7 @@
               useUserPackages = true;
               users = {
                 ${(import config-env.path).user or "default"} =
-                  import ./types/"${(import config-env.path).type or "default"}.nix";
+                  import ./types/${(import config-env.path).type or "default"}.nix;
               };
             };
           }
