@@ -23,7 +23,7 @@
               useUserPackages = true;
               users = {
                 # env.nixの値を利用
-                ${(import /etc/nixos/env.nix).user or "default-user"} = import ./types/"${(import /etc/nixos/env.nix).type or "default"}".nix;
+                ${(import /etc/nixos/env.nix).user or "default-user"} = import ./types/${(import /etc/nixos/env.nix).type or "default"}.nix;
               };
             };
           }
